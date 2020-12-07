@@ -4,7 +4,7 @@ const router = require("express").Router();
 let User = require("../Models/user");
 router.use(bodyParser.json());
 
-router.post("/signup",(req,res)=>{
+router.post("/signup",(req,res,next)=>{
     let username = req.body.uname;
     User.findOne({uname:username})
         .then((user)=>{
@@ -12,26 +12,24 @@ router.post("/signup",(req,res)=>{
                 res.setHeader("Content-Type","application/json");
                 var err = new Error("User "+username+" already exist. Try Again");
                 err.status = 403;
+                next(err);
             } else {
                 User.create({
-                    username:   req.body.username,
-                    password:   req.body.password   })
+                    uname:   req.body.uname,
+                    pass:   req.body.pass   })
                     .then((user)=>{
-                        res.setHeader("Content-Type","application.json");
+                        res.setHeader("Content-Type","application/json");
                         res.statusCode = 200;
                         res.json({
-                            ustatus: 'Registration Successful!', user: user
+                            "ustatus": 'Registration Successful!',
+                             "user": user
                         })
-                    .catch((err)=>{
-                        console.log(err);
-                       })
-                    })
-
+                        
+                    },(err)=>{ console.log(err); })
+                    .catch((err)=>{ console.log(err); })
             }
         },(err)=>{console.log(err)})
-        .catch((err)=>{
-            console.log(err);
-        })
+        .catch((err)=>{console.log(err);})
 });
 router.post("/login",(req,res)=>{
     if (!req.session) {                                     //check if session exist 
