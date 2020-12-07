@@ -31,27 +31,27 @@ router.post("/signup",(req,res,next)=>{
         },(err)=>{console.log(err)})
         .catch((err)=>{console.log(err);})
 });
-router.post("/login",(req,res)=>{
-    if (!req.session) {                                     //check if session exist 
+router.post("/login",(req,res,next)=>{
+    if (!req.session.user) {                                     //check if session exist 
         var authHeader = req.headers.authorization;
 
         if (!authHeader) {
             var err = new Error('You are not authenticated!');
             res.setHeader('WWW-Authenticate', 'Basic');
             err.status = 401;
-            next(err);
-            return;
+            return next(err);
+            
         }
         var auth = new Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-        var user = auth[0];
+        var userR = auth[0];
         var passw = auth[1];
 
         //check uname exist in db
-        User.findOne({uname: user})
+        User.findOne({uname: userR})
             .then ((user)=>{
                 if (user === null) {
                     //user not found
-                    var err = new Error('User ' + user.uname + ' does not exist!');
+                    var err = new Error('User '+userR+'does not exist!');
                     err.status = 403;
                     return next(err);
 
@@ -61,7 +61,7 @@ router.post("/login",(req,res)=>{
                     err.status = 403;
                     return next(err);
 
-                } else if ( user.pass === pass && user.uname === user){
+                } else if ( user.pass === passw && user.uname === userR){
                     //authorized
                     req.session.user = 'authenticated';
                     res.statusCode = 200;
@@ -73,7 +73,7 @@ router.post("/login",(req,res)=>{
                     err.status = 401;
                     next(err);
                 }
-                })
+                },(err) => next(err))
                 .catch((err) => next(err));
 
     } else {
